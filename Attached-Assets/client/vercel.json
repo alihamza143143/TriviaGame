@@ -9,5 +9,5 @@
   "routes": [
     { "src": "/(.*)", "dest": "/index.html" }
   ],
-  "outputDirectory": "dist/public"
+  "outputDirectory": "dist"
 }
