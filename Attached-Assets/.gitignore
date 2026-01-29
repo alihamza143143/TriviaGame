@@ -1,9 +1,25 @@
-node_modules
+# Dependencies
+node_modules/
 
+# Environment
+.env
+.env*.local
+.env.production
+
+# Build output
+dist/
+client/dist/
+
+# Vercel
+.vercel
+
+# IDE / OS
+.vscode/
+.idea/
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+*.log
+*.local
 
-# Player scores data (persisted locally)
-scores-data.json
+# Replit / misc
+.replit
+.local/

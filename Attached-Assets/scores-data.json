@@ -1,0 +1,54 @@
+{
+  "scores": [
+    {
+      "id": 1,
+      "playerName": "MoneyMaster",
+      "score": 450,
+      "tier": "adults",
+      "passiveIncome": 250,
+      "streak": 0,
+      "bestStreak": 0,
+      "coins": 0,
+      "xp": 0,
+      "createdAt": "2026-01-29T11:25:14.597Z"
+    },
+    {
+      "id": 3,
+      "playerName": "TeenTycoon",
+      "score": 380,
+      "tier": "teens",
+      "passiveIncome": 210,
+      "streak": 0,
+      "bestStreak": 0,
+      "coins": 0,
+      "xp": 0,
+      "createdAt": "2026-01-29T11:25:14.604Z"
+    },
+    {
+      "id": 2,
+      "playerName": "SaverKid",
+      "score": 320,
+      "tier": "kids",
+      "passiveIncome": 180,
+      "streak": 0,
+      "bestStreak": 0,
+      "coins": 0,
+      "xp": 0,
+      "createdAt": "2026-01-29T11:25:14.603Z"
+    },
+    {
+      "id": 4,
+      "playerName": "Raja Ali Hamza",
+      "score": 403,
+      "tier": "teens",
+      "passiveIncome": 215,
+      "streak": 9,
+      "bestStreak": 9,
+      "coins": 90,
+      "xp": 90,
+      "createdAt": "2026-01-29T11:36:46.867Z"
+    }
+  ],
+  "nextId": 5,
+  "lastUpdated": "2026-01-29T11:36:46.867Z"
+}
