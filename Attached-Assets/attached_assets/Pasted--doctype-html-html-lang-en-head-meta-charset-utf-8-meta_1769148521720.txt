@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wealth Quest Lite (HTML5)</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121b2f;
+      --card2:#0f172a;
+      --text:#e7eefc;
+      --muted:#a9b6d3;
+      --good:#2dd4bf;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:#243256;
+      --accent:#60a5fa;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 20% 0%, #1b2a5a 0%, var(--bg) 50%) fixed;
+      color:var(--text);
+    }
+    header{
+      padding:18px 16px;
+      border-bottom:1px solid var(--line);
+      position:sticky; top:0;
+      background: rgba(11,18,32,0.8);
+      backdrop-filter: blur(10px);
+      z-index:10;
+    }
+    header .row{
+      max-width:1100px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    h1{
+      font-size:18px;
+      margin:0;
+      letter-spacing:0.2px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(18,27,47,0.65);
+      color:var(--muted);
+      font-size:13px;
+    }
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:16px;
+      display:grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap:14px;
+    }
+    @media (max-width: 960px){
+      main{grid-template-columns:1fr}
+    }
+    .panel{
+      background: rgba(18,27,47,0.65);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2{
+      margin:0 0 10px;
+      font-size:14px;
+      color:var(--muted);
+      font-weight:600;
+      letter-spacing:0.5px;
+      text-transform:uppercase;
+    }
+
+    /* Board */
+    .board{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+    .tile{
+      border:1px solid var(--line);
+      background: rgba(15,23,42,0.6);
+      border-radius:14px;
+      padding:10px;
+      min-height:84px;
+      position:relative;
+      overflow:hidden;
+    }
+    .tile .label{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.2;
+      margin-bottom:8px;
+    }
+    .tile .type{
+      font-size:11px;
+      opacity:0.9;
+      padding:4px 8px;
+      border-radius:999px;
+      display:inline-block;
+      border:1px solid var(--line);
+      background: rgba(18,27,47,0.6);
+      color: var(--text);
+    }
+    .tile.active{
+      outline:2px solid var(--accent);
+      box-shadow: 0 0 0 3px rgba(96,165,250,0.25);
+    }
+    .pawn{
+      position:absolute;
+      right:10px;
+      bottom:10px;
+      font-size:18px;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
+    }
+    .tile .corner{
+      position:absolute;
+      left:-30px; top:-30px;
+      width:90px; height:90px;
+      transform: rotate(25deg);
+      opacity:0.12;
+      background: linear-gradient(135deg, var(--accent), transparent);
+      border-radius:18px;
+    }
+
+    /* Controls / UI */
+    .row2{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    button{
+      cursor:pointer;
+      border:1px solid var(--line);
+      background: rgba(18,27,47,0.75);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:600;
+      transition: transform .05s ease, background .2s ease, border-color .2s ease;
+    }
+    button:hover{ background: rgba(18,27,47,0.95); border-color:#36508f; }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      border-color: rgba(96,165,250,0.6);
+      background: rgba(96,165,250,0.15);
+    }
+    button.primary:hover{ background: rgba(96,165,250,0.22); }
+    button:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+    select{
+      border:1px solid var(--line);
+      background: rgba(18,27,47,0.75);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:600;
+      outline:none;
+    }
+    .statgrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    .stat{
+      border:1px solid var(--line);
+      background: rgba(15,23,42,0.55);
+      border-radius:14px;
+      padding:10px;
+    }
+    .stat .k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+    .stat .v{ font-size:18px; margin-top:4px; font-weight:800; }
+
+    .log{
+      max-height:200px;
+      overflow:auto;
+      border:1px solid var(--line);
+      background: rgba(15,23,42,0.5);
+      border-radius:14px;
+      padding:10px;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .log b{ color:var(--text); }
+
+    /* Modal */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:99;
+    }
+    .overlay.open{ display:flex; }
+    .modal{
+      width:min(680px, 100%);
+      background: rgba(18,27,47,0.95);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    }
+    .modal h3{
+      margin:0 0 8px;
+      font-size:18px;
+    }
+    .modal p{
+      margin:0 0 10px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .qbox{
+      margin-top:10px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(15,23,42,0.6);
+      padding:12px;
+    }
+    .answers{
+      display:grid;
+      gap:8px;
+      margin-top:10px;
+    }
+    .answers button{
+      text-align:left;
+      font-weight:700;
+    }
+    .result{
+      margin-top:10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      display:none;
+    }
+    .result.good{ display:block; background: rgba(45,212,191,0.14); color: var(--text); border-color: rgba(45,212,191,0.35); }
+    .result.bad{ display:block; background: rgba(251,113,133,0.14); color: var(--text); border-color: rgba(251,113,133,0.35); }
+    .tiny{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .footer-note{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:12px;
+      opacity:0.9;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>Wealth Quest Lite</h1>
+    <div class="row2">
+      <span class="pill">🎯 Goal: Reach <b id="goalPassive"> $200</b> Passive Income</span>
+      <label class="pill" style="gap:10px">
+        Age Tier
+        <select id="tierSelect" aria-label="Age tier">
+          <option value="kids">Kids (8–12)</option>
+          <option value="teens">Teens (13–17)</option>
+          <option value="adults">Adults (18+)</option>
+        </select>
+      </label>
+      <button class="primary" id="newGameBtn">New Game</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Board</h2>
+    <div class="board" id="board"></div>
+
+    <div style="margin-top:12px" class="row2">
+      <button class="primary" id="rollBtn">Roll & Move</button>
+      <button id="resolveBtn" disabled>Resolve Tile</button>
+      <button id="cashOutBtn" disabled>End Turn</button>
+      <span class="pill">🎲 Roll: <b id="rollOut">-</b></span>
+      <span class="pill">🧭 Position: <b id="posOut">1</b>/12</span>
+    </div>
+
+    <div class="statgrid">
+      <div class="stat"><div class="k">Cash</div><div class="v" id="cashOut">$0</div></div>
+      <div class="stat"><div class="k">Passive Income</div><div class="v" id="piOut">$0</div></div>
+      <div class="stat"><div class="k">Score</div><div class="v" id="scoreOut">0</div></div>
+    </div>
+
+    <p class="footer-note">
+      Tip: Correct answers grow wealth. Wrong answers cost cash. Investment tiles can increase passive income.
+      Risk tiles can hurt — but you can recover by learning.
+    </p>
+  </section>
+
+  <aside class="panel">
+    <h2>Game Log</h2>
+    <div class="log" id="log"></div>
+
+    <div style="margin-top:12px">
+      <h2>How this can be profitable</h2>
+      <div class="log" style="max-height:none">
+        <b>Monetization (ethical):</b><br/>
+        • Free version: reward ads to retry a question, double rewards, or shield a risk event.<br/>
+        • Premium ($4.99): remove ads + unlock Adult tier + advanced boards (tax liens, options, estate planning).<br/>
+        • Subscription (schools/parents): dashboards + lesson packs + printable worksheets.<br/>
+        <span class="tiny">This demo is ad-free. Add monetization later once engagement is proven.</span>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <h3 id="modalTitle">Tile</h3>
+    <p id="modalDesc"></p>
+
+    <div class="qbox" id="qbox" style="display:none">
+      <div><b id="qText"></b></div>
+      <div class="answers" id="answers"></div>
+      <div class="result" id="resultBox"></div>
+      <div class="tiny" id="explainText"></div>
+    </div>
+
+    <div class="row2" style="margin-top:12px; justify-content:flex-end;">
+      <button id="closeModalBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * Wealth Quest Lite
+ * - Monopoly-ish movement
+ * - Resolve tiles: trivia + decisions
+ * - 3 tiers with different question sets
+ * - Win: passive income >= goal
+ */
+
+const GOAL_PASSIVE = 200;
+
+const TILES = [
+  { id: 1,  label: "Start: Payday", type: "start" },
+  { id: 2,  label: "Budget Basics", type: "trivia" },
+  { id: 3,  label: "Start a Business", type: "decision" },
+  { id: 4,  label: "High-Yield Savings", type: "trivia" },
+  { id: 5,  label: "Real Estate Deal", type: "invest" },
+  { id: 6,  label: "Bank Loan / Line of Credit", type: "decision" },
+  { id: 7,  label: "Stocks / ETFs", type: "invest" },
+  { id: 8,  label: "Crypto Volatility", type: "risk" },
+  { id: 9,  label: "Foreclosure / Refinance / HELOC", type: "risk" },
+  { id:10,  label: "Estate Planning / Trust", type: "trivia" },
+  { id:11,  label: "Tax Liens / Tax Deeds", type: "trivia" },
+  { id:12,  label: "Goal Setting & Review", type: "decision" },
+];
+
+const QUESTIONS = {
+  kids: [
+    {topic:"banking", q:"What is a bank used for?", a:["To keep money safe","To make video games","To hide candy"], correct:0, exp:"Banks help people store money and use accounts to manage it."},
+    {topic:"saving", q:"What does it mean to save money?", a:["Spend it right away","Put some aside for later","Lose it"], correct:1, exp:"Saving means keeping money for future needs or goals."},
+    {topic:"business", q:"A business is…", a:["A way to earn money by helping people","A toy","A secret code"], correct:0, exp:"Businesses earn money by solving problems or serving customers."},
+    {topic:"investing", q:"Investing is like…", a:["Planting a seed to grow later","Throwing money away","Hiding money under a bed"], correct:0, exp:"Investing helps money grow over time, like a seed becoming a tree."},
+    {topic:"insurance", q:"Why do people buy insurance?", a:["To protect against big surprises","To buy candy","To make money instantly"], correct:0, exp:"Insurance helps protect you from expensive emergencies."},
+    {topic:"goals", q:"A money goal should be…", a:["Random","Clear and specific","Impossible"], correct:1, exp:"Specific goals are easier to plan and achieve."},
+  ],
+  teens: [
+    {topic:"hysa", q:"A high-yield savings account usually offers…", a:["Higher interest than regular savings","Lower interest always","No interest ever"], correct:0, exp:"HYSA typically pay higher interest rates than standard savings."},
+    {topic:"etf", q:"An ETF is best described as…", a:["A basket of investments","A loan","A credit card"], correct:0, exp:"ETFs can hold many stocks/bonds and trade like a stock."},
+    {topic:"credit", q:"A line of credit is…", a:["Borrowing up to a limit when needed","Free money","A type of paycheck"], correct:0, exp:"Lines of credit let you borrow up to a max amount and repay over time."},
+    {topic:"crypto", q:"Crypto prices often change quickly because…", a:["They are volatile","They never change","They are always stable"], correct:0, exp:"Crypto markets can move fast due to news, demand, and speculation."},
+    {topic:"realestate", q:"Cash flow from a rental property is…", a:["Rent income minus expenses","Only the rent amount","Only repairs"], correct:0, exp:"Cash flow is what’s left after mortgage, repairs, taxes, etc."},
+    {topic:"foreclosure", q:"Foreclosure happens when…", a:["A borrower can’t pay the mortgage","A home is painted","A stock rises"], correct:0, exp:"If mortgage payments aren’t made, the lender may take the home."},
+  ],
+  adults: [
+    {topic:"options", q:"Options are…", a:["Contracts that give the right (not obligation) to buy/sell","A guaranteed profit tool","The same as savings"], correct:0, exp:"Options are derivatives; they can amplify gains and losses."},
+    {topic:"trust", q:"A trust can help with…", a:["Avoiding probate and managing assets","Doubling money overnight","Avoiding all taxes always"], correct:0, exp:"Trusts can streamline inheritance and control how assets are distributed."},
+    {topic:"taxliens", q:"A tax lien typically represents…", a:["A claim on property due to unpaid taxes","A home refinance","A stock dividend"], correct:0, exp:"Investors may earn interest when owners repay overdue property taxes."},
+    {topic:"heloc", q:"A HELOC is best described as…", a:["A credit line secured by home equity","A car loan","A savings account"], correct:0, exp:"HELOCs let homeowners borrow against equity, typically variable rate."},
+    {topic:"mutualfunds", q:"Mutual funds are…", a:["Pooled investments managed as a fund","Always risk-free","Only for the rich"], correct:0, exp:"Mutual funds pool money to invest in diversified portfolios."},
+    {topic:"refinance", q:"Refinancing a mortgage can…", a:["Change the interest rate/term and payment","Erase the debt magically","Guarantee profit"], correct:0, exp:"Refinancing may lower payment or rate, but costs and terms matter."},
+  ]
+};
+
+// --- State ---
+let state;
+
+const $ = (id)=>document.getElementById(id);
+
+function money(n){
+  const sign = n < 0 ? "-" : "";
+  return sign + "$" + Math.abs(n).toLocaleString();
+}
+
+function log(msg){
+  const el = $("log");
+  const line = document.createElement("div");
+  line.innerHTML = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function resetLog(){
+  $("log").innerHTML = "";
+}
+
+function newGame(){
+  const tier = $("tierSelect").value;
+  state = {
+    tier,
+    pos: 1,
+    cash: 500,          // start cash
+    passiveIncome: 0,   // grows via investments
+    score: 0,
+    lastRoll: null,
+    moved: false,
+    resolved: false,
+  };
+
+  resetLog();
+  log(`New game started. Tier: <b>${tier.toUpperCase()}</b>. You begin with <b>${money(state.cash)}</b>.`);
+  renderBoard();
+  updateUI();
+  $("rollBtn").disabled = false;
+  $("resolveBtn").disabled = true;
+  $("cashOutBtn").disabled = true;
+}
+
+function renderBoard(){
+  const b = $("board");
+  b.innerHTML = "";
+  TILES.forEach(tile=>{
+    const div = document.createElement("div");
+    div.className = "tile" + (tile.id === state.pos ? " active":"");
+    div.innerHTML = `
+      <div class="corner"></div>
+      <div class="label"><b>${tile.id}.</b> ${tile.label}</div>
+      <span class="type">${tile.type.toUpperCase()}</span>
+      ${tile.id === state.pos ? `<div class="pawn">🧍‍♂️</div>` : ``}
+    `;
+    b.appendChild(div);
+  });
+}
+
+function updateUI(){
+  $("cashOut").textContent = money(state.cash);
+  $("piOut").textContent = money(state.passiveIncome);
+  $("scoreOut").textContent = state.score.toString();
+  $("posOut").textContent = state.pos.toString();
+  $("rollOut").textContent = state.lastRoll ?? "-";
+  $("goalPassive").textContent = " " + money(GOAL_PASSIVE);
+
+  renderBoard();
+
+  // win condition
+  if(state.passiveIncome >= GOAL_PASSIVE){
+    log(`🏆 <b>You reached Financial Freedom!</b> Passive Income is ${money(state.passiveIncome)} (goal ${money(GOAL_PASSIVE)}).`);
+    $("rollBtn").disabled = true;
+    $("resolveBtn").disabled = true;
+    $("cashOutBtn").disabled = true;
+  }
+}
+
+function rollAndMove(){
+  // 1–3 keeps it quick/strategic for casual play
+  const roll = 1 + Math.floor(Math.random()*3);
+  state.lastRoll = roll;
+
+  // Collect passive income each move (simple loop)
+  const income = state.passiveIncome;
+  state.cash += income;
+  if(income > 0){
+    log(`💸 You collected passive income: <b>${money(income)}</b>.`);
+    state.score += Math.ceil(income / 10);
+  }
+
+  // Move
+  let newPos = state.pos + roll;
+  if(newPos > TILES.length){
+    newPos = newPos - TILES.length; // wrap
+    // Payday bonus for passing Start
+    const bonus = 200;
+    state.cash += bonus;
+    log(`✅ Passed Start — payday bonus: <b>${money(bonus)}</b>.`);
+    state.score += 10;
+  }
+
+  state.pos = newPos;
+  state.moved = true;
+  state.resolved = false;
+
+  log(`🎲 Rolled <b>${roll}</b>. Moved to tile <b>#${state.pos}</b> (${TILES[state.pos-1].label}).`);
+
+  $("rollBtn").disabled = true;
+  $("resolveBtn").disabled = false;
+  $("cashOutBtn").disabled = true;
+
+  updateUI();
+}
+
+function endTurn(){
+  state.moved = false;
+  state.resolved = false;
+  state.lastRoll = null;
+
+  $("rollBtn").disabled = false;
+  $("resolveBtn").disabled = true;
+  $("cashOutBtn").disabled = true;
+
+  log(`⏭️ Turn ended. Roll again.`);
+  updateUI();
+}
+
+function openModal(title, desc){
+  $("modalTitle").textContent = title;
+  $("modalDesc").textContent = desc;
+  $("overlay").classList.add("open");
+}
+
+function closeModal(){
+  $("overlay").classList.remove("open");
+  // enable end turn if resolved
+  if(state.resolved){
+    $("cashOutBtn").disabled = false;
+  }
+}
+
+function randPick(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function askQuestion(question, rewardCash=120, penaltyCash=80, rewardPI=0){
+  $("qbox").style.display = "block";
+  $("resultBox").style.display = "none";
+  $("resultBox").className = "result";
+  $("explainText").textContent = "";
+
+  $("qText").textContent = question.q;
+  const answers = $("answers");
+  answers.innerHTML = "";
+
+  question.a.forEach((text, idx)=>{
+    const btn = document.createElement("button");
+    btn.textContent = (idx+1) + ") " + text;
+    btn.onclick = ()=>{
+      // lock buttons
+      [...answers.querySelectorAll("button")].forEach(b=>b.disabled=true);
+
+      const correct = idx === question.correct;
+      if(correct){
+        state.cash += rewardCash;
+        state.score += 15;
+        if(rewardPI > 0){
+          state.passiveIncome += rewardPI;
+          state.score += 10;
+        }
+        $("resultBox").classList.add("good");
+        $("resultBox").textContent =
+          `✅ Correct! +${money(rewardCash)} cash` + (rewardPI>0 ? ` and +${money(rewardPI)} passive income.` : ".");
+      } else {
+        state.cash -= penaltyCash;
+        state.score = Math.max(0, state.score - 8);
+        $("resultBox").classList.add("bad");
+        $("resultBox").textContent = `❌ Not quite. -${money(penaltyCash)} cash.`;
+      }
+      $("explainText").textContent = "Why: " + question.exp;
+
+      state.resolved = true;
+      log(`📘 Trivia resolved. Cash: <b>${money(state.cash)}</b>, Passive: <b>${money(state.passiveIncome)}</b>.`);
+      updateUI();
+    };
+    answers.appendChild(btn);
+  });
+}
+
+function resolveTile(){
+  const tile = TILES[state.pos-1];
+
+  // reset modal content
+  $("qbox").style.display = "none";
+  $("answers").innerHTML = "";
+  $("resultBox").style.display = "none";
+  $("resultBox").className = "result";
+  $("explainText").textContent = "";
+
+  // Tile behaviors
+  if(tile.type === "start"){
+    const payday = 150;
+    state.cash += payday;
+    state.score += 8;
+    state.resolved = true;
+    openModal("Payday!", `You landed on Start. You earned ${money(payday)} for showing up and tracking your money.`);
+    log(`💼 Landed on Start: +<b>${money(payday)}</b>.`);
+    updateUI();
+    $("resolveBtn").disabled = true;
+    return;
+  }
+
+  if(tile.type === "trivia"){
+    openModal("Finance Trivia", `Answer a question to gain cash (and knowledge). Tier: ${state.tier.toUpperCase()}.`);
+    const q = randPick(QUESTIONS[state.tier]);
+    // trivia: cash only
+    askQuestion(q, 120, 80, 0);
+  }
+
+  if(tile.type === "invest"){
+    openModal("Investment Opportunity", "Answer correctly to unlock passive income. This is how wealth grows while you sleep.");
+    // pick question; correct gives passive income too
+    const q = randPick(QUESTIONS[state.tier]);
+    // reward includes passive income
+    const piReward = state.tier === "kids" ? 20 : state.tier === "teens" ? 35 : 50;
+    askQuestion(q, 90, 90, piReward);
+  }
+
+  if(tile.type === "risk"){
+    openModal("Risk Event", "Risk happens in real life. Answer correctly to reduce damage or turn it into a lesson.");
+    const q = randPick(QUESTIONS[state.tier]);
+    // risk: wrong hurts more; correct still gives modest reward
+    askQuestion(q, 70, 140, 0);
+
+    // also apply a small random event after answering (only once)
+    const originalHandler = $("answers").querySelector("button")?.onclick; // not used
+  }
+
+  if(tile.type === "decision"){
+    openModal("Decision Time", "Make a choice. Some choices cost cash now but increase passive income later.");
+
+    // build decisions by tier
+    const decisions = buildDecisionsByTile(tile.id, state.tier);
+    $("qbox").style.display = "block";
+    $("qText").textContent = decisions.prompt;
+    const answers = $("answers");
+    answers.innerHTML = "";
+    $("resultBox").style.display = "none";
+    $("resultBox").className = "result";
+    $("explainText").textContent = "";
+
+    decisions.choices.forEach((c)=>{
+      const btn = document.createElement("button");
+      btn.textContent = c.label;
+      btn.onclick = ()=>{
+        [...answers.querySelectorAll("button")].forEach(b=>b.disabled=true);
+
+        state.cash += c.cashDelta;
+        state.passiveIncome += c.passiveDelta;
+        state.score = Math.max(0, state.score + c.scoreDelta);
+
+        const good = (c.cashDelta + c.passiveDelta) >= 0 || c.scoreDelta > 0;
+        $("resultBox").classList.add(good ? "good" : "bad");
+        $("resultBox").textContent = c.resultLine(state);
+        $("explainText").textContent = "Why: " + c.explain;
+
+        state.resolved = true;
+        log(`🧠 Decision resolved. Cash: <b>${money(state.cash)}</b>, Passive: <b>${money(state.passiveIncome)}</b>.`);
+        updateUI();
+      };
+      answers.appendChild(btn);
+    });
+  }
+
+  $("resolveBtn").disabled = true;
+}
+
+function buildDecisionsByTile(tileId, tier){
+  // Keep it simple + aligned with your topic list
+  if(tileId === 3){
+    return {
+      prompt: "Starting a small business: what’s your move?",
+      choices: [
+        {
+          label: "Start a simple service (low cost) - pay $120, learn customers",
+          cashDelta: -120, passiveDelta: tier==="kids" ? 10 : 20, scoreDelta: 12,
+          explain: "Low-cost businesses teach sales and can become repeat income.",
+          resultLine: ()=>`✅ You started small. Cash ${money(state.cash)}. Passive +${money(tier==="kids"?10:20)}.`
+        },
+        {
+          label: "Buy expensive gear with no plan - pay $220",
+          cashDelta: -220, passiveDelta: 0, scoreDelta: -6,
+          explain: "Spending before validating demand can drain cash fast.",
+          resultLine: ()=>`❌ Costly lesson. Cash ${money(state.cash)}. Validate demand first.`
+        },
+        {
+          label: "Do market research first (free) - gain strategy points",
+          cashDelta: 0, passiveDelta: 0, scoreDelta: 8,
+          explain: "Research reduces risk and improves future decisions.",
+          resultLine: ()=>`✅ Smart move. You learned your market. Score +8.`
+        }
+      ]
+    };
+  }
+
+  if(tileId === 6){
+    return {
+      prompt: "Banking: You need capital. What do you choose?",
+      choices: [
+        {
+          label: "Apply for a small business loan (pay $60 fees, +$140 passive later)",
+          cashDelta: -60, passiveDelta: tier==="kids" ? 10 : tier==="teens" ? 25 : 35, scoreDelta: 10,
+          explain: "Debt can help if it funds revenue that exceeds the cost of borrowing.",
+          resultLine: ()=>`✅ You used credit wisely. Passive income increased.`
+        },
+        {
+          label: "Open a line of credit and spend it on wants (-$150)",
+          cashDelta: -150, passiveDelta: 0, scoreDelta: -10,
+          explain: "Using credit for non-productive spending creates stress and interest costs.",
+          resultLine: ()=>`❌ Debt without returns hurts.`
+        },
+        {
+          label: "Bootstrap: save first (free) + small bonus",
+          cashDelta: 40, passiveDelta: 0, scoreDelta: 6,
+          explain: "Saving builds a buffer and reduces reliance on debt.",
+          resultLine: ()=>`✅ You boosted your savings discipline. +$40 cash.`
+        }
+      ]
+    };
+  }
+
+  if(tileId === 12){
+    return {
+      prompt: "Goal Setting: Pick a wealth plan for the next 3 turns.",
+      choices: [
+        {
+          label: "Auto-save + invest (pay $80 now, +$40 passive)",
+          cashDelta: -80, passiveDelta: tier==="kids"?15: tier==="teens"?30:40, scoreDelta: 12,
+          explain: "Automating good behavior is a powerful wealth habit.",
+          resultLine: ()=>`✅ Automation activated. Passive income rose.`
+        },
+        {
+          label: "No plan (do nothing)",
+          cashDelta: 0, passiveDelta: 0, scoreDelta: -2,
+          explain: "Without goals, money drifts into spending.",
+          resultLine: ()=>`⚠️ No plan. Try setting a clear target next time.`
+        },
+        {
+          label: "Increase income: side hustle sprint (+$120 cash, -$10 passive)",
+          cashDelta: 120, passiveDelta: -10, scoreDelta: 6,
+          explain: "Active income is great, but passive is what wins long term.",
+          resultLine: ()=>`✅ Great hustle. Consider rebuilding passive income next.`
+        }
+      ]
+    };
+  }
+
+  // default
+  return {
+    prompt: "Decision: Choose a smart money move.",
+    choices: [
+      {
+        label: "Save 10% ( +$30 cash buffer )",
+        cashDelta: 30, passiveDelta: 0, scoreDelta: 5,
+        explain: "Small buffers prevent big problems.",
+        resultLine: ()=>`✅ Buffer built.`
+      },
+      {
+        label: "Invest for the long term ( -$50 cash, +$20 passive )",
+        cashDelta: -50, passiveDelta: 20, scoreDelta: 10,
+        explain: "Investing grows wealth over time.",
+        resultLine: ()=>`✅ Long-term investing increased passive income.`
+      },
+      {
+        label: "Impulse spend ( -$70 )",
+        cashDelta: -70, passiveDelta: 0, scoreDelta: -6,
+        explain: "Impulse spending delays goals.",
+        resultLine: ()=>`❌ Ouch. Try a spending plan.`
+      }
+    ]
+  };
+}
+
+// Close modal and handle buttons
+$("closeModalBtn").addEventListener("click", closeModal);
+$("overlay").addEventListener("click", (e)=>{
+  if(e.target.id === "overlay") closeModal();
+});
+
+// Buttons
+$("rollBtn").addEventListener("click", rollAndMove);
+$("resolveBtn").addEventListener("click", resolveTile);
+$("cashOutBtn").addEventListener("click", endTurn);
+$("newGameBtn").addEventListener("click", newGame);
+$("tierSelect").addEventListener("change", ()=>{
+  // changing tier resets for clarity
+  newGame();
+});
+
+// Start
+newGame();
+</script>
+</body>
+</html>
