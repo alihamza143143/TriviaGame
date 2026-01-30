@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Dices, RotateCcw, Save, Trophy, ArrowRight, User, Activity,
-  Sparkles, Zap, Target, Crown, Play, ChevronRight, Star,
+  Gamepad2, Zap, Target, Crown, Play, ChevronRight, Star,
   Pause, X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -558,7 +558,7 @@ export default function Home() {
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
               className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-white/10 mb-6"
             >
-              <Sparkles className="w-12 h-12 text-cyan-400" />
+              <Gamepad2 className="w-12 h-12 text-cyan-400" />
             </motion.div>
 
             <motion.h1 
