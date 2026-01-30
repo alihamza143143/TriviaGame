@@ -6,7 +6,6 @@ import {
   TILES, QUESTIONS, buildDecisionsByTile, 
   type Tier, type Tile 
 } from "@/lib/game-data";
-import { sounds } from "@/lib/sounds";
 import { GameBoard } from "@/components/GameBoard";
 import { PlayerStats } from "@/components/PlayerStats";
 import { GameModal, type ModalType } from "@/components/GameModal";
@@ -15,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { 
   Dices, RotateCcw, Save, Trophy, ArrowRight, User, Activity,
   Sparkles, Zap, Target, Crown, Play, ChevronRight, Star,
-  Volume2, VolumeX, Music, Pause, X
+  Pause, X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -126,11 +125,7 @@ function DifficultyCard({ tier, onClick, delay }: { tier: Tier; onClick: () => v
       transition={{ delay, duration: 0.5, ease: "easeOut" }}
       whileHover={{ scale: 1.03, y: -5 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => {
-        sounds.click();
-        onClick();
-      }}
-      onMouseEnter={() => sounds.hover()}
+      onClick={onClick}
       className={`
         relative group w-full p-6 rounded-2xl text-left
         bg-gradient-to-br from-white/5 to-white/[0.02]
@@ -163,13 +158,9 @@ function DifficultyCard({ tier, onClick, delay }: { tier: Tier; onClick: () => v
 }
 
 // Pause Menu Component
-function PauseMenu({ onResume, onQuit, soundEnabled, musicEnabled, onToggleSound, onToggleMusic }: {
+function PauseMenu({ onResume, onQuit }: {
   onResume: () => void;
   onQuit: () => void;
-  soundEnabled: boolean;
-  musicEnabled: boolean;
-  onToggleSound: () => void;
-  onToggleMusic: () => void;
 }) {
   return (
     <motion.div
@@ -190,39 +181,6 @@ function PauseMenu({ onResume, onQuit, soundEnabled, musicEnabled, onToggleSound
         
         <h2 className="text-2xl font-bold font-display text-white mb-2">Game Paused</h2>
         <p className="text-gray-400 mb-8">Take a break and come back when you're ready!</p>
-
-        {/* Sound Controls */}
-        <div className="space-y-3 mb-8">
-          <button
-            onClick={onToggleSound}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
-              soundEnabled 
-                ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' 
-                : 'bg-white/5 border-white/10 text-gray-400'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-              Sound Effects
-            </span>
-            <span className="text-xs uppercase">{soundEnabled ? 'On' : 'Off'}</span>
-          </button>
-
-          <button
-            onClick={onToggleMusic}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
-              musicEnabled 
-                ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' 
-                : 'bg-white/5 border-white/10 text-gray-400'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Music className="w-5 h-5" />
-              Background Music
-            </span>
-            <span className="text-xs uppercase">{musicEnabled ? 'On' : 'Off'}</span>
-          </button>
-        </div>
 
         {/* Actions */}
         <div className="space-y-3">
@@ -276,48 +234,18 @@ export default function Home() {
 
   const [playerName, setPlayerName] = useState("");
   const [isRolling, setIsRolling] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [musicEnabled, setMusicEnabled] = useState(true);
   const { data: highScores } = useScores();
   const createScore = useCreateScore();
   const { toast } = useToast();
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  // Toggle sound effects
-  const toggleSound = () => {
-    const newState = !soundEnabled;
-    setSoundEnabled(newState);
-    sounds.setEnabled(newState);
-    if (newState) {
-      sounds.click();
-    }
-  };
-
-  // Toggle background music
-  const toggleMusic = () => {
-    const newState = !musicEnabled;
-    setMusicEnabled(newState);
-    sounds.setMusicEnabled(newState);
-    if (newState && gameState.status === "playing") {
-      sounds.startBackgroundMusic();
-    } else {
-      sounds.stopBackgroundMusic();
-    }
-  };
-
   // Pause game
   const pauseGame = () => {
-    sounds.pause();
-    sounds.stopBackgroundMusic();
     setGameState(prev => ({ ...prev, status: "paused" }));
   };
 
   // Resume game
   const resumeGame = () => {
-    sounds.resume();
-    if (musicEnabled) {
-      sounds.startBackgroundMusic();
-    }
     setGameState(prev => ({ ...prev, status: "playing" }));
   };
 
@@ -326,19 +254,11 @@ export default function Home() {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [gameState.logs]);
 
-  // Cleanup music on unmount
-  useEffect(() => {
-    return () => {
-      sounds.stopBackgroundMusic();
-    };
-  }, []);
-
   const addLog = (msg: string) => {
     setGameState(prev => ({ ...prev, logs: [...prev.logs, msg] }));
   };
 
   const startGame = (tier: Tier) => {
-    sounds.gameStart();
     setGameState({
       status: "playing",
       tier,
@@ -358,8 +278,6 @@ export default function Home() {
   };
 
   const quitGame = () => {
-    sounds.click();
-    sounds.stopBackgroundMusic();
     setGameState(prev => ({ ...prev, status: "setup" }));
   };
 
@@ -367,7 +285,6 @@ export default function Home() {
     if (gameState.turnMoved) return;
 
     setIsRolling(true);
-    sounds.diceRoll();
     
     // Animate dice roll
     setTimeout(() => {
@@ -380,7 +297,6 @@ export default function Home() {
       if (income > 0) {
         addLog(`💸 Passive Income collected: +$${income}`);
         newScore += Math.ceil(income / 10);
-        sounds.coin();
       }
 
       let newPos = gameState.pos + roll;
@@ -389,13 +305,10 @@ export default function Home() {
         newCash += 200;
         newScore += 10;
         addLog("✅ Passed Start: Payday +$200!");
-        sounds.payday();
       }
 
       const tile = TILES.find(t => t.id === newPos)!;
       addLog(`📍 Moved to tile #${newPos}: ${tile.label}`);
-      
-      sounds.move();
 
       setGameState(prev => ({
         ...prev,
@@ -412,7 +325,6 @@ export default function Home() {
   };
 
   const resolveTile = () => {
-    sounds.click();
     const tile = TILES.find(t => t.id === gameState.pos)!;
     const tierQuestions = QUESTIONS[gameState.tier];
 
@@ -425,8 +337,6 @@ export default function Home() {
         turnResolved: true
       }));
       addLog(`💰 Landed on Start! Bonus +$${bonus}`);
-      sounds.payday();
-      sounds.modalOpen();
       setModalState({
         isOpen: true,
         type: "start",
@@ -435,15 +345,6 @@ export default function Home() {
         result: null
       });
       return;
-    }
-
-    // Play sound based on tile type
-    if (tile.type === "risk") {
-      sounds.riskWarning();
-    } else if (tile.type === "invest") {
-      sounds.investSound();
-    } else {
-      sounds.modalOpen();
     }
 
     const randQ = tierQuestions[Math.floor(Math.random() * tierQuestions.length)];
@@ -482,8 +383,6 @@ export default function Home() {
   };
 
   const handleAnswer = (idx: number) => {
-    sounds.select();
-    
     const tile = TILES.find(t => t.id === gameState.pos)!;
     let cashChange = 0;
     let piChange = 0;
@@ -500,11 +399,6 @@ export default function Home() {
         const cashGain = Math.round(rewardCash * mult);
         const coinGain = isCorrect ? (5 + Math.min(20, nextStreak)) : 0;
         const xpGain = isCorrect ? 10 : 0;
-
-        // Play streak sound if streak increased
-        if (isCorrect && nextStreak > 1) {
-          setTimeout(() => sounds.streak(), 300);
-        }
 
         return {
           ...prev,
@@ -532,38 +426,11 @@ export default function Home() {
       if(cashChange !== 0) message += `Cash: ${cashChange > 0 ? '+' : ''}${cashChange}. `;
       if(piChange !== 0) message += `Passive: ${piChange > 0 ? '+' : ''}${piChange}. `;
 
-      // Play appropriate sound for decision outcome
-      setTimeout(() => {
-        if (success) {
-          if (piChange > 0) {
-            sounds.levelUp();
-          } else if (cashChange > 0) {
-            sounds.coin();
-          } else {
-            sounds.correct();
-          }
-        } else {
-          if (cashChange < 0) {
-            sounds.loseMoney();
-          } else {
-            sounds.wrong();
-          }
-        }
-      }, 100);
     } else {
       const question = modalState.question!;
       const isCorrect = idx === question.correct;
       explanation = question.exp;
       success = isCorrect;
-
-      // Play sound based on answer
-      setTimeout(() => {
-        if (isCorrect) {
-          sounds.correct();
-        } else {
-          sounds.wrong();
-        }
-      }, 100);
 
       if (isCorrect) {
         scoreChange += 15;
@@ -572,7 +439,6 @@ export default function Home() {
           const piReward = gameState.tier === "kids" ? 20 : gameState.tier === "teens" ? 35 : 50;
           piChange = piReward;
           message = `Correct! You secured the investment.`;
-          setTimeout(() => sounds.levelUp(), 500);
         } else if (tile.type === "risk") {
           cashChange = 70;
           message = `Correct! You managed the risk well.`;
@@ -585,7 +451,6 @@ export default function Home() {
         if (tile.type === "risk") {
           cashChange = -140;
           message = `Incorrect. The risk event hit hard.`;
-          setTimeout(() => sounds.loseMoney(), 500);
         } else {
           cashChange = -80;
           message = `Incorrect. Missed opportunity.`;
@@ -602,7 +467,6 @@ export default function Home() {
       const nextScore = Math.max(0, prev.score + scoreChange);
       
       if (nextPi >= GOAL_PASSIVE) {
-        sounds.victory();
         confetti({
           particleCount: 150,
           spread: 70,
@@ -629,8 +493,6 @@ export default function Home() {
   };
 
   const endTurn = () => {
-    sounds.modalClose();
-    sounds.turnEnd();
     setModalState(prev => ({ ...prev, isOpen: false }));
     setGameState(prev => ({
       ...prev,
@@ -643,12 +505,10 @@ export default function Home() {
 
   const submitScore = async () => {
     if (!playerName.trim()) {
-      sounds.wrong();
       toast({ title: "Name required", description: "Please enter your name.", variant: "destructive" });
       return;
     }
     try {
-      sounds.click();
       await createScore.mutateAsync({
         playerName,
         score: gameState.score,
@@ -659,11 +519,9 @@ export default function Home() {
         coins: gameState.coins,
         xp: gameState.xp
       });
-      sounds.levelUp();
       toast({ title: "Score Saved!", description: "You are now on the leaderboard." });
       setGameState(prev => ({ ...prev, status: "setup" }));
     } catch (e) {
-      sounds.wrong();
       toast({ title: "Error", description: "Could not save score.", variant: "destructive" });
     }
   };
@@ -673,19 +531,6 @@ export default function Home() {
     return (
       <div className="min-h-screen relative overflow-hidden">
         <ParticleBackground />
-        
-        {/* Sound Toggle Button */}
-        <button
-          onClick={toggleSound}
-          className="fixed top-4 right-4 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
-          title={soundEnabled ? "Mute sounds" : "Enable sounds"}
-        >
-          {soundEnabled ? (
-            <Volume2 className="w-5 h-5 text-white" />
-          ) : (
-            <VolumeX className="w-5 h-5 text-gray-400" />
-          )}
-        </button>
 
         {/* Floating decorations */}
         <FloatingIcon delay={0.5} className="absolute top-20 left-[10%] opacity-20">
@@ -859,14 +704,6 @@ export default function Home() {
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
         <ParticleBackground />
         
-        {/* Sound Toggle */}
-        <button
-          onClick={toggleSound}
-          className="fixed top-4 right-4 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
-        >
-          {soundEnabled ? <Volume2 className="w-5 h-5 text-white" /> : <VolumeX className="w-5 h-5 text-gray-400" />}
-        </button>
-        
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -925,7 +762,6 @@ export default function Home() {
                 className="pl-10 bg-black/30 border-white/20 text-white placeholder:text-gray-500 h-12"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
-                onFocus={() => sounds.click()}
               />
             </div>
             
@@ -940,10 +776,7 @@ export default function Home() {
             <Button 
               variant="ghost" 
               className="w-full text-gray-400 hover:text-white hover:bg-white/5"
-              onClick={() => {
-                sounds.click();
-                setGameState(s => ({ ...s, status: "setup" }));
-              }}
+              onClick={() => setGameState(s => ({ ...s, status: "setup" }))}
             >
               Skip & Menu
             </Button>
@@ -964,10 +797,6 @@ export default function Home() {
           <PauseMenu 
             onResume={resumeGame}
             onQuit={quitGame}
-            soundEnabled={soundEnabled}
-            musicEnabled={musicEnabled}
-            onToggleSound={toggleSound}
-            onToggleMusic={toggleMusic}
           />
         )}
       </AnimatePresence>
@@ -988,32 +817,6 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Music Toggle */}
-            <button
-              onClick={toggleMusic}
-              className={`p-2 rounded-lg border transition-all ${
-                musicEnabled 
-                  ? 'bg-purple-500/20 border-purple-500/30 text-purple-400' 
-                  : 'bg-white/5 border-white/10 text-gray-400'
-              }`}
-              title={musicEnabled ? "Mute music" : "Enable music"}
-            >
-              <Music className="w-4 h-4" />
-            </button>
-
-            {/* Sound Toggle */}
-            <button
-              onClick={toggleSound}
-              className={`p-2 rounded-lg border transition-all ${
-                soundEnabled 
-                  ? 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400' 
-                  : 'bg-white/5 border-white/10 text-gray-400'
-              }`}
-              title={soundEnabled ? "Mute sounds" : "Enable sounds"}
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </button>
-
             {/* Pause Button */}
             <Button 
               variant="ghost" 
